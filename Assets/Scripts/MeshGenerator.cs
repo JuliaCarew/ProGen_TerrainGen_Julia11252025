@@ -1,163 +1,152 @@
+using System.Collections;
 using UnityEngine;
 
 public class MeshGenerator : MonoBehaviour
 {
+    #region Variables
+
     [Header("Terrain Settings")]
     [SerializeField] private int width = 50;
     [SerializeField] private int height = 50;
-    [SerializeField] private float scale = 10f;
-    [SerializeField] private float heightMultiplier = 5f;
+    [SerializeField] private float scale = 5f;
+    [SerializeField] private float heightMultiplier = 10f;
     
     [Header("Perlin Noise Settings")]
-    [SerializeField] private float noiseScale = 0.1f;
+    [SerializeField] private float noiseScale = 0.3f;
     [SerializeField] private Vector2 offset = Vector2.zero;
     
-    [Header("Spectral Synthesis (Octaves)")]
-    [SerializeField] private bool useOctaves = true;
-    [SerializeField] private int octaves = 4;
-    [SerializeField] private float persistence = 0.5f;
-    [SerializeField] private float lacunarity = 2f;
-    
-    private MeshFilter meshFilter;
-    private MeshRenderer meshRenderer;
-    private MeshCollider meshCollider;
+    private MeshGen meshSimplify;
+    private TerrainMeshRenderer terrainMeshRenderer;
+    private Coroutine currentGenerationCoroutine;
 
+    #endregion
     void Start()
     {
-        // Get or add required components
-        meshFilter = GetComponent<MeshFilter>();
-        if (meshFilter == null)
-            meshFilter = gameObject.AddComponent<MeshFilter>();
+        // get or add components
+        meshSimplify = GetComponent<MeshGen>();
+        if (meshSimplify == null)
+            meshSimplify = gameObject.AddComponent<MeshGen>();
         
-        meshRenderer = GetComponent<MeshRenderer>();
-        if (meshRenderer == null)
-            meshRenderer = gameObject.AddComponent<MeshRenderer>();
+        terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
+        if (terrainMeshRenderer == null)
+            terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
         
-        meshCollider = GetComponent<MeshCollider>();
-        if (meshCollider == null)
-            meshCollider = gameObject.AddComponent<MeshCollider>();
+        // set mesh size from terrain settings
+        meshSimplify.SetSize(width, height);
         
-        // Generate the terrain mesh
-        GenerateTerrain();
+        // generate terrain mesh 
+        StartCoroutine(GenerateTerrain());
+    }
+    
+    void Awake()
+    {
+        // ensure TerrainMeshRenderer is initialized 
+        terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
+        if (terrainMeshRenderer == null)
+            terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
     }
 
-    void GenerateTerrain()
+    IEnumerator GenerateTerrain()
     {
-        // Create new mesh
-        Mesh mesh = new Mesh();
-        mesh.name = "Procedural Terrain";
-        
-        // Generate vertices
-        Vector3[] vertices = new Vector3[(width + 1) * (height + 1)];
-        Vector2[] uvs = new Vector2[vertices.Length];
-        
-        // Generate vertices with height from Perlin noise
-        for (int z = 0; z <= height; z++)
+        // Ensure meshSimplify exists
+        if (meshSimplify == null)
         {
-            for (int x = 0; x <= width; x++)
-            {
-                float xCoord = (x / (float)width) * scale;
-                float zCoord = (z / (float)height) * scale;
-                
-                // Calculate height using Perlin noise
-                float y = CalculateHeight(xCoord, zCoord);
-                
-                int index = z * (width + 1) + x;
-                vertices[index] = new Vector3(x - width / 2f, y, z - height / 2f);
-                uvs[index] = new Vector2(x / (float)width, z / (float)height);
-            }
+            meshSimplify = GetComponent<MeshGen>();
+            if (meshSimplify == null)
+                meshSimplify = gameObject.AddComponent<MeshGen>();
         }
         
-        // Generate triangles
-        int[] triangles = new int[width * height * 6];
-        int triIndex = 0;
-        
-        for (int z = 0; z < height; z++)
+        if (terrainMeshRenderer == null)
         {
-            for (int x = 0; x < width; x++)
-            {
-                int bottomLeft = z * (width + 1) + x;
-                int bottomRight = bottomLeft + 1;
-                int topLeft = (z + 1) * (width + 1) + x;
-                int topRight = topLeft + 1;
-                
-                // First triangle (bottom-left, top-left, bottom-right)
-                triangles[triIndex] = bottomLeft;
-                triangles[triIndex + 1] = topLeft;
-                triangles[triIndex + 2] = bottomRight;
-                
-                // Second triangle (bottom-right, top-left, top-right)
-                triangles[triIndex + 3] = bottomRight;
-                triangles[triIndex + 4] = topLeft;
-                triangles[triIndex + 5] = topRight;
-                
-                triIndex += 6;
-            }
+            terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
+            if (terrainMeshRenderer == null)
+                terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
         }
         
-        // Assign data to mesh
-        mesh.vertices = vertices;
-        mesh.triangles = triangles;
-        mesh.uv = uvs;
+        if (meshSimplify == null)
+        {
+            currentGenerationCoroutine = null;
+            yield break;
+        }
         
-        // Recalculate normals and bounds
-        mesh.RecalculateNormals();
-        mesh.RecalculateBounds();
+        yield return StartCoroutine(meshSimplify.CreateShape(noiseScale, offset, heightMultiplier, scale));
         
-        // Assign mesh to components
-        meshFilter.mesh = mesh;
-        meshCollider.sharedMesh = mesh;
+        // get the generated mesh and update the renderer
+        Mesh mesh = meshSimplify.GetMesh();
+        if (mesh != null && terrainMeshRenderer != null)
+            terrainMeshRenderer.UpdateMesh(mesh);
+        
+        // clear the coroutine reference 
+        currentGenerationCoroutine = null;
     }
     
-    float CalculateHeight(float x, float z)
-    {
-        float heightValue = 0f;
-        
-        if (useOctaves)
-        {
-            // Spectral Synthesis: Multiple octaves of Perlin noise
-            float amplitude = 1f;
-            float frequency = noiseScale;
-            float maxValue = 0f;
-            
-            for (int i = 0; i < octaves; i++)
-            {
-                float sampleX = (x + offset.x) * frequency;
-                float sampleZ = (z + offset.y) * frequency;
-                
-                // Mathf.PerlinNoise returns value between 0 and 1
-                float perlinValue = Mathf.PerlinNoise(sampleX, sampleZ);
-                
-                // Add this octave's contribution
-                heightValue += perlinValue * amplitude;
-                
-                // Track maximum possible value for normalization
-                maxValue += amplitude;
-                
-                // Prepare for next octave
-                amplitude *= persistence;  // Decrease amplitude
-                frequency *= lacunarity;   // Increase frequency
-            }
-            
-            // Normalize to 0-1 range
-            heightValue /= maxValue;
-        }
-        else
-        {
-            // Single layer Perlin noise
-            float sampleX = (x + offset.x) * noiseScale;
-            float sampleZ = (z + offset.y) * noiseScale;
-            heightValue = Mathf.PerlinNoise(sampleX, sampleZ);
-        }
-        
-        // Scale by height multiplier
-        return heightValue * heightMultiplier;
-    }
-    
-    // Method to regenerate terrain (useful for testing different parameters)
+    // regenerate terrain
     [ContextMenu("Regenerate Terrain")]
     public void RegenerateTerrain()
     {
-        GenerateTerrain();
+        // stop any existing generation coroutine
+        if (currentGenerationCoroutine != null)
+        {
+            try
+            {
+                StopCoroutine(currentGenerationCoroutine);
+            }
+            catch (System.Exception)
+            {
+                // ignore errors 
+            }
+            currentGenerationCoroutine = null;
+        }
+        
+        // Ensure components exist
+        if (meshSimplify == null)
+        {
+            meshSimplify = GetComponent<MeshGen>();
+            if (meshSimplify == null)
+                meshSimplify = gameObject.AddComponent<MeshGen>();
+        }
+        
+        if (terrainMeshRenderer == null)
+        {
+            terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
+            if (terrainMeshRenderer == null)
+                terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
+        }
+        
+        // validate size values
+        if (width <= 0 || height <= 0)
+        {
+            width = 50;
+            height = 50;
+        }
+        
+        // sync size values before regenerating
+        if (meshSimplify != null)
+        {
+            meshSimplify.SetSize(width, height);
+        }
+        
+        // start new coroutine
+        if (this != null && gameObject.activeInHierarchy)
+        {
+            currentGenerationCoroutine = StartCoroutine(GenerateTerrain());
+        }
     }
+    
+    #region UISettings
+    // public methods for UI settings
+    public void SetWidth(int value) { width = value; }
+    public void SetHeight(int value) { height = value; }
+    public void SetScale(float value) { scale = value; }
+    public void SetHeightMultiplier(float value) { heightMultiplier = value; }
+    public void SetNoiseScale(float value) { noiseScale = value; }
+    
+    // getters for UI settings
+    public int GetWidth() { return width; }
+    public int GetHeight() { return height; }
+    public float GetScale() { return scale; }
+    public float GetHeightMultiplier() { return heightMultiplier; }
+    public float GetNoiseScale() { return noiseScale; }
+    
+    #endregion
 }
