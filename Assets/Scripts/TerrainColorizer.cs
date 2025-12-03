@@ -56,11 +56,5 @@ public class TerrainColorizer : MonoBehaviour
             return peakColor;
         }
     }
-    
-    // public getters for colors
-    public Color GetWaterColor() { return waterColor; }
-    public Color GetGrassColor() { return grassColor; }
-    public Color GetMountainColor() { return mountainColor; }
-    public Color GetPeakColor() { return peakColor; }
 }
 
