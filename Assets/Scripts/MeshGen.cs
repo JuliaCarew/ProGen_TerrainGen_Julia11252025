@@ -26,6 +26,13 @@ public class MeshGen : MonoBehaviour
     private float maxHeight;
     
     #endregion
+    
+    void Awake()
+    {
+        // register with GameManager
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetMeshGen(this);
+    }
 
     /// <summary>
     /// Generates a procedural terrain mesh using Perlin noise for height generation.

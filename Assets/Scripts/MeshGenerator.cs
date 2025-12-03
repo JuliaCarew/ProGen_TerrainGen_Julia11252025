@@ -30,23 +30,51 @@ public class MeshGenerator : MonoBehaviour
 
     #endregion
     
+    #region Helper Methods
+    
+    /// ensure all required components are initialized via GameManager
+    private void EnsureComponents()
+    {
+        if (meshSimplify == null)
+        {
+            meshSimplify = GameManager.Instance.MeshGen;
+            if (meshSimplify == null)
+            {
+                meshSimplify = gameObject.AddComponent<MeshGen>();
+                GameManager.Instance.SetMeshGen(meshSimplify);
+            }
+        }
+        
+        if (terrainMeshRenderer == null)
+        {
+            terrainMeshRenderer = GameManager.Instance.TerrainMeshRenderer;
+            if (terrainMeshRenderer == null)
+            {
+                terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
+                GameManager.Instance.SetTerrainMeshRenderer(terrainMeshRenderer);
+            }
+        }
+        
+        if (terrainColorizer == null)
+        {
+            terrainColorizer = GameManager.Instance.TerrainColorizer;
+            if (terrainColorizer == null)
+            {
+                terrainColorizer = gameObject.AddComponent<TerrainColorizer>();
+                GameManager.Instance.SetTerrainColorizer(terrainColorizer);
+            }
+        }
+    }
+    
+    #endregion
+    
     void Start()
     {
-        // get or add components
-        meshSimplify = GetComponent<MeshGen>();
-        if (meshSimplify == null)
-            meshSimplify = gameObject.AddComponent<MeshGen>();
-        
-        terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
-        if (terrainMeshRenderer == null)
-            terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
-        
-        terrainColorizer = GetComponent<TerrainColorizer>();
-        if (terrainColorizer == null)
-            terrainColorizer = gameObject.AddComponent<TerrainColorizer>();
+        EnsureComponents();
         
         // set mesh size from terrain settings
-        meshSimplify.SetSize(width, height);
+        if (meshSimplify != null)
+            meshSimplify.SetSize(width, height);
         
         // generate terrain mesh 
         StartCoroutine(GenerateTerrain());
@@ -54,38 +82,22 @@ public class MeshGenerator : MonoBehaviour
     
     void Awake()
     {
-        // ensure TerrainMeshRenderer is initialized 
-        terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
-        if (terrainMeshRenderer == null)
-            terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
+        // register with GameManager
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetMeshGenerator(this);
+        
+        EnsureComponents();
     }
 
     IEnumerator GenerateTerrain()
     {
-        // ensure mesh exists
-        if (meshSimplify == null)
-        {
-            meshSimplify = GetComponent<MeshGen>();
-            if (meshSimplify == null)
-                meshSimplify = gameObject.AddComponent<MeshGen>();
-        }
-        
-        if (terrainMeshRenderer == null)
-        {
-            terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
-            if (terrainMeshRenderer == null)
-                terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
-        }
+        EnsureComponents();
         
         if (meshSimplify == null)
         {
             currentGenerationCoroutine = null;
             yield break;
         }
-        
-        // get colorizer 
-        if (terrainColorizer == null)
-            terrainColorizer = GetComponent<TerrainColorizer>();
         
         yield return StartCoroutine(meshSimplify.CreateShape(noiseScale, offset, heightMultiplier, scale, terrainColorizer));
         
@@ -113,27 +125,7 @@ public class MeshGenerator : MonoBehaviour
             currentGenerationCoroutine = null;
         }
         
-        // ensure components exist
-        if (meshSimplify == null)
-        {
-            meshSimplify = GetComponent<MeshGen>();
-            if (meshSimplify == null)
-                meshSimplify = gameObject.AddComponent<MeshGen>();
-        }
-        
-        if (terrainMeshRenderer == null)
-        {
-            terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
-            if (terrainMeshRenderer == null)
-                terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
-        }
-        
-        if (terrainColorizer == null)
-        {
-            terrainColorizer = GetComponent<TerrainColorizer>();
-            if (terrainColorizer == null)
-                terrainColorizer = gameObject.AddComponent<TerrainColorizer>();
-        }
+        EnsureComponents();
         
         // validate size values
         if (width < MIN_TERRAIN_SIZE || height < MIN_TERRAIN_SIZE)

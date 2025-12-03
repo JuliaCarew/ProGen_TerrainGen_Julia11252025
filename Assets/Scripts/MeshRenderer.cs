@@ -12,6 +12,10 @@ public class TerrainMeshRenderer : MonoBehaviour
 
     void Awake()
     {
+        // register with GameManager
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetTerrainMeshRenderer(this);
+        
         // get or add components
         meshFilter = GetComponent<MeshFilter>();
         if (meshFilter == null)

@@ -12,6 +12,13 @@ public class TerrainColorizer : MonoBehaviour
     [SerializeField] private Color mountainColor = new Color(0.5f, 0.4f, 0.3f, 1f);  // brown
     [SerializeField] private Color peakColor = new Color(0.9f, 0.9f, 0.9f, 1f);      // white
     
+    void Awake()
+    {
+        // register with GameManager
+        if (GameManager.Instance != null)
+            GameManager.Instance.SetTerrainColorizer(this);
+    }
+    
     /// <summary>
     /// Calculates vertex color based on height using gradient blending between regions.
     /// </summary>
