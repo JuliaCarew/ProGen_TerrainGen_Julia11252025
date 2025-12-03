@@ -18,12 +18,7 @@ public class TerrainMeshRenderer : MonoBehaviour
         
         // get or add components
         meshFilter = GetComponent<MeshFilter>();
-        if (meshFilter == null)
-            meshFilter = gameObject.AddComponent<MeshFilter>();
-        
         meshRenderer = GetComponent<MeshRenderer>();
-        if (meshRenderer == null)
-            meshRenderer = gameObject.AddComponent<MeshRenderer>();
         
         // apply material 
         if (terrainMaterial != null)
@@ -34,21 +29,6 @@ public class TerrainMeshRenderer : MonoBehaviour
     {
         if (mesh == null)
             return;
-        
-        // ensure components exist
-        if (meshFilter == null)
-        {
-            meshFilter = GetComponent<MeshFilter>();
-            if (meshFilter == null)
-                meshFilter = gameObject.AddComponent<MeshFilter>();
-        }
-        
-        if (meshRenderer == null)
-        {
-            meshRenderer = GetComponent<MeshRenderer>();
-            if (meshRenderer == null)
-                meshRenderer = gameObject.AddComponent<MeshRenderer>();
-        }
         
         // assign mesh
         if (meshFilter != null)
