@@ -1,5 +1,6 @@
 using UnityEngine;
 
+/// Handles mesh rendering and material assignment for generated terrain.
 public class TerrainMeshRenderer : MonoBehaviour
 {
     [Header("Material Settings")]
@@ -42,6 +43,13 @@ public class TerrainMeshRenderer : MonoBehaviour
                 meshFilter = gameObject.AddComponent<MeshFilter>();
         }
         
+        if (meshRenderer == null)
+        {
+            meshRenderer = GetComponent<UnityEngine.MeshRenderer>();
+            if (meshRenderer == null)
+                meshRenderer = gameObject.AddComponent<UnityEngine.MeshRenderer>();
+        }
+        
         if (meshCollider == null)
         {
             meshCollider = GetComponent<MeshCollider>();
@@ -55,6 +63,21 @@ public class TerrainMeshRenderer : MonoBehaviour
         
         if (meshCollider != null)
             meshCollider.sharedMesh = mesh;
+        
+        // ensure material is set and uses vertex colors
+        if (meshRenderer != null)
+        {
+            // vertex color shader
+            if (terrainMaterial == null)
+            {
+                Shader vertexColorShader = Shader.Find("Custom/VertexColor");
+                if (vertexColorShader != null)
+                    terrainMaterial = new Material(vertexColorShader);
+            }
+            
+            if (terrainMaterial != null)
+                meshRenderer.material = terrainMaterial;
+        }
     }
     
     public void SetMaterial(Material material)

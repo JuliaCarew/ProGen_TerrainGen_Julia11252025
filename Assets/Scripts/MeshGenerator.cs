@@ -1,25 +1,35 @@
 using System.Collections;
 using UnityEngine;
 
+/// Main manager class for terrain generation system.
+/// Coordinates mesh generation, rendering, and coloring components.
 public class MeshGenerator : MonoBehaviour
 {
     #region Variables
 
+    private const int DEFAULT_TERRAIN_SIZE = 50;
+    private const float DEFAULT_SCALE = 5f;
+    private const float DEFAULT_HEIGHT_MULTIPLIER = 10f;
+    private const float DEFAULT_NOISE_SCALE = 0.3f;
+    private const int MIN_TERRAIN_SIZE = 1;
+
     [Header("Terrain Settings")]
-    [SerializeField] private int width = 50;
-    [SerializeField] private int height = 50;
-    [SerializeField] private float scale = 5f;
-    [SerializeField] private float heightMultiplier = 10f;
+    [SerializeField] private int width = DEFAULT_TERRAIN_SIZE;
+    [SerializeField] private int height = DEFAULT_TERRAIN_SIZE;
+    [SerializeField] private float scale = DEFAULT_SCALE;
+    [SerializeField] private float heightMultiplier = DEFAULT_HEIGHT_MULTIPLIER;
     
     [Header("Perlin Noise Settings")]
-    [SerializeField] private float noiseScale = 0.3f;
+    [SerializeField] private float noiseScale = DEFAULT_NOISE_SCALE;
     [SerializeField] private Vector2 offset = Vector2.zero;
     
     private MeshGen meshSimplify;
     private TerrainMeshRenderer terrainMeshRenderer;
+    private TerrainColorizer terrainColorizer;
     private Coroutine currentGenerationCoroutine;
 
     #endregion
+    
     void Start()
     {
         // get or add components
@@ -30,6 +40,10 @@ public class MeshGenerator : MonoBehaviour
         terrainMeshRenderer = GetComponent<TerrainMeshRenderer>();
         if (terrainMeshRenderer == null)
             terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
+        
+        terrainColorizer = GetComponent<TerrainColorizer>();
+        if (terrainColorizer == null)
+            terrainColorizer = gameObject.AddComponent<TerrainColorizer>();
         
         // set mesh size from terrain settings
         meshSimplify.SetSize(width, height);
@@ -48,7 +62,7 @@ public class MeshGenerator : MonoBehaviour
 
     IEnumerator GenerateTerrain()
     {
-        // Ensure meshSimplify exists
+        // ensure mesh exists
         if (meshSimplify == null)
         {
             meshSimplify = GetComponent<MeshGen>();
@@ -69,7 +83,11 @@ public class MeshGenerator : MonoBehaviour
             yield break;
         }
         
-        yield return StartCoroutine(meshSimplify.CreateShape(noiseScale, offset, heightMultiplier, scale));
+        // get colorizer 
+        if (terrainColorizer == null)
+            terrainColorizer = GetComponent<TerrainColorizer>();
+        
+        yield return StartCoroutine(meshSimplify.CreateShape(noiseScale, offset, heightMultiplier, scale, terrainColorizer));
         
         // get the generated mesh and update the renderer
         Mesh mesh = meshSimplify.GetMesh();
@@ -91,14 +109,11 @@ public class MeshGenerator : MonoBehaviour
             {
                 StopCoroutine(currentGenerationCoroutine);
             }
-            catch (System.Exception)
-            {
-                // ignore errors 
-            }
+            catch (System.Exception) {}
             currentGenerationCoroutine = null;
         }
         
-        // Ensure components exist
+        // ensure components exist
         if (meshSimplify == null)
         {
             meshSimplify = GetComponent<MeshGen>();
@@ -113,11 +128,18 @@ public class MeshGenerator : MonoBehaviour
                 terrainMeshRenderer = gameObject.AddComponent<TerrainMeshRenderer>();
         }
         
-        // validate size values
-        if (width <= 0 || height <= 0)
+        if (terrainColorizer == null)
         {
-            width = 50;
-            height = 50;
+            terrainColorizer = GetComponent<TerrainColorizer>();
+            if (terrainColorizer == null)
+                terrainColorizer = gameObject.AddComponent<TerrainColorizer>();
+        }
+        
+        // validate size values
+        if (width < MIN_TERRAIN_SIZE || height < MIN_TERRAIN_SIZE)
+        {
+            width = DEFAULT_TERRAIN_SIZE;
+            height = DEFAULT_TERRAIN_SIZE;
         }
         
         // sync size values before regenerating
@@ -135,18 +157,9 @@ public class MeshGenerator : MonoBehaviour
     
     #region UISettings
     // public methods for UI settings
-    public void SetWidth(int value) { width = value; }
-    public void SetHeight(int value) { height = value; }
     public void SetScale(float value) { scale = value; }
     public void SetHeightMultiplier(float value) { heightMultiplier = value; }
     public void SetNoiseScale(float value) { noiseScale = value; }
-    
-    // getters for UI settings
-    public int GetWidth() { return width; }
-    public int GetHeight() { return height; }
-    public float GetScale() { return scale; }
-    public float GetHeightMultiplier() { return heightMultiplier; }
-    public float GetNoiseScale() { return noiseScale; }
     
     #endregion
 }

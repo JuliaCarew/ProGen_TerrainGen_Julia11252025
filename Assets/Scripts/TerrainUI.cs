@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+/// UI Manager for terrain generation controls.
 public class TerrainUI : MonoBehaviour
 {
     #region Variables
@@ -10,8 +11,6 @@ public class TerrainUI : MonoBehaviour
     [SerializeField] private MeshGenerator meshGenerator;
     
     [Header("Terrain Settings Sliders")]
-    [SerializeField] private Slider widthSlider;
-    [SerializeField] private Slider heightSlider;
     [SerializeField] private Slider scaleSlider;
     [SerializeField] private Slider heightMultiplierSlider;
     
@@ -19,8 +18,6 @@ public class TerrainUI : MonoBehaviour
     [SerializeField] private Slider noiseScaleSlider;
     
     [Header("UI Labels")]
-    [SerializeField] private TextMeshProUGUI widthLabel;
-    [SerializeField] private TextMeshProUGUI heightLabel;
     [SerializeField] private TextMeshProUGUI scaleLabel;
     [SerializeField] private TextMeshProUGUI heightMultiplierLabel;
     [SerializeField] private TextMeshProUGUI noiseScaleLabel;
@@ -37,28 +34,6 @@ public class TerrainUI : MonoBehaviour
     }
 
     #region Slider Event Handlers
-
-    void OnWidthChanged(float value)
-    {
-        int intValue = Mathf.RoundToInt(value);
-        if (meshGenerator != null)
-        {
-            meshGenerator.SetWidth(intValue);
-            meshGenerator.RegenerateTerrain();
-        }
-        UpdateLabel(widthLabel, "Width: ", value);
-    }
-
-    void OnHeightChanged(float value)
-    {
-        int intValue = Mathf.RoundToInt(value);
-        if (meshGenerator != null)
-        {
-            meshGenerator.SetHeight(intValue);
-            meshGenerator.RegenerateTerrain();
-        }
-        UpdateLabel(heightLabel, "Height: ", value);
-    }
 
     void OnScaleChanged(float value)
     {
@@ -94,6 +69,7 @@ public class TerrainUI : MonoBehaviour
 
     #region Helper Methods
 
+    /// updates a UI label with a formatted value.
     void UpdateLabel(TextMeshProUGUI label, string prefix, float value)
     {
         if (label != null)
@@ -102,12 +78,6 @@ public class TerrainUI : MonoBehaviour
     
     void SubscribeToSliders()
     {
-        if (widthSlider != null)
-            widthSlider.onValueChanged.AddListener(OnWidthChanged);
-        
-        if (heightSlider != null)
-            heightSlider.onValueChanged.AddListener(OnHeightChanged);
-        
         if (scaleSlider != null)
             scaleSlider.onValueChanged.AddListener(OnScaleChanged);
         
