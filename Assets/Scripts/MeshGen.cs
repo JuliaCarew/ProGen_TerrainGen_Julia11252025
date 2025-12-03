@@ -5,7 +5,6 @@ public class MeshGen : MonoBehaviour
 {
     #region Constants and Variables
     private const int DEFAULT_MESH_SIZE = 50;
-    private const int VERTICES_PER_QUAD = 4;
     private const int TRIANGLES_PER_QUAD = 2;
     private const int INDICES_PER_TRIANGLE = 3;
     private const int TOTAL_INDICES_PER_QUAD = TRIANGLES_PER_QUAD * INDICES_PER_TRIANGLE; // 6
@@ -52,11 +51,11 @@ public class MeshGen : MonoBehaviour
         {
             for (int x = 0; x <= xSize; x++)
             {
-                // world position in Unity space
+                // world position
                 float worldX = (float)x;
                 float worldZ = (float)z;
                 
-                // perlin noise
+                // normalized position
                 float normalizedX = (float)x / (float)xSize;
                 float normalizedZ = (float)z / (float)zSize;
                 
@@ -77,7 +76,7 @@ public class MeshGen : MonoBehaviour
             }
         }
         
-        // store min/max for color calculation
+        // store min/max for color
         minHeight = minY;
         maxHeight = maxY;
         

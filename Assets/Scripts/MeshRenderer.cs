@@ -7,7 +7,7 @@ public class TerrainMeshRenderer : MonoBehaviour
     [SerializeField] private Material terrainMaterial;
     
     private MeshFilter meshFilter;
-    private UnityEngine.MeshRenderer meshRenderer;
+    private MeshRenderer meshRenderer;
     private MeshCollider meshCollider;
 
     void Awake()
@@ -17,13 +17,9 @@ public class TerrainMeshRenderer : MonoBehaviour
         if (meshFilter == null)
             meshFilter = gameObject.AddComponent<MeshFilter>();
         
-        meshRenderer = GetComponent<UnityEngine.MeshRenderer>();
+        meshRenderer = GetComponent<MeshRenderer>();
         if (meshRenderer == null)
-            meshRenderer = gameObject.AddComponent<UnityEngine.MeshRenderer>();
-        
-        meshCollider = GetComponent<MeshCollider>();
-        if (meshCollider == null)
-            meshCollider = gameObject.AddComponent<MeshCollider>();
+            meshRenderer = gameObject.AddComponent<MeshRenderer>();
         
         // apply material 
         if (terrainMaterial != null)
@@ -45,16 +41,9 @@ public class TerrainMeshRenderer : MonoBehaviour
         
         if (meshRenderer == null)
         {
-            meshRenderer = GetComponent<UnityEngine.MeshRenderer>();
+            meshRenderer = GetComponent<MeshRenderer>();
             if (meshRenderer == null)
-                meshRenderer = gameObject.AddComponent<UnityEngine.MeshRenderer>();
-        }
-        
-        if (meshCollider == null)
-        {
-            meshCollider = GetComponent<MeshCollider>();
-            if (meshCollider == null)
-                meshCollider = gameObject.AddComponent<MeshCollider>();
+                meshRenderer = gameObject.AddComponent<MeshRenderer>();
         }
         
         // assign mesh
